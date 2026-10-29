@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VINCY THE PHANTOM CHASER — 2D Action Side-Scroller Game</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="arcade.css">
+<link rel="icon" href="assets/favicon.svg">
+</head>
+<body class="w-screen h-screen overflow-hidden flex flex-col bg-[#070d0b]">
+
+  <!-- ===================================================================== -->
+  <!-- TOP IN-GAME HUD BAR                                                   -->
+  <!-- ===================================================================== -->
+  <header class="h-14 sm:h-16 bg-[#0d1814]/95 border-b-2 border-[#213830] px-2.5 sm:px-5 flex items-center justify-between gap-2 z-30 shrink-0">
+    <!-- Left: Player Vincy Status (HP, Roh Gauge, Score/Coins) -->
+    <div class="flex items-center gap-2.5 sm:gap-4">
+      <div class="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#172a23] border-2 border-[#d4e857] p-0.5 flex items-center justify-center shrink-0 shadow-md">
+        <img src="assets/arcade/584069d8cb2dacee.png" alt="Vincy" class="w-full h-full object-contain" />
+        <span id="hud-combo-badge" class="hidden absolute -bottom-1.5 -right-2 px-1.5 py-0.2 rounded-full bg-amber-400 text-[#09110e] font-display font-extrabold text-[10px] shadow">
+          x2
+        </span>
+      </div>
+
+      <div class="flex flex-col justify-center">
+        <!-- Hearts & Score -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div id="hud-hearts" class="flex items-center text-sm sm:text-base tracking-tight" title="Nyawa Vincy (HP)">
+            ❤️❤️❤️❤️❤️
+          </div>
+          <div class="flex items-center gap-1.5 text-xs sm:text-sm font-bold bg-[#14241e] px-2 py-0.5 rounded-lg border border-[#264238]">
+            <span>🪙</span>
+            <span id="hud-score" class="text-[#d4e857] font-mono">0</span>
+          </div>
+        </div>
+
+        <!-- Roh Special Energy Bar -->
+        <div class="flex items-center gap-1.5 mt-1">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-300">ROH:</span>
+          <div class="w-24 sm:w-32 h-2.5 bg-[#070d0b] rounded-full overflow-hidden border border-purple-500/50 p-0.5">
+            <div id="hud-special-bar" class="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-400 to-[#d4e857] transition-all duration-150" style="width: 100%;"></div>
+          </div>
+          <span id="hud-special-ready" class="text-[10px] font-bold text-[#d4e857] animate-pulse">SIAP [E]</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Active Stage & Wave Progress -->
+    <div class="hidden md:flex flex-col items-center justify-center min-w-[220px]">
+      <div class="flex items-center gap-2">
+        <span id="hud-stage-badge" class="px-2 py-0.5 rounded bg-[#1b3029] text-[#d4e857] font-display font-bold text-xs tracking-wide">
+          STAGE 1: THE VILLAGE
+        </span>
+        <span id="hud-wave-text" class="text-xs font-semibold text-gray-300">
+          Demit: 0 / 10
+        </span>
+      </div>
+      <div class="w-48 h-2 bg-[#070d0b] rounded-full overflow-hidden border border-[#29463c] mt-1">
+        <div id="hud-stage-progress" class="h-full bg-[#d4e857] transition-all duration-200" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Right: Weapon Selector & Game Menu Modals -->
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- Weapon Switch Pills -->
+      <div class="hidden sm:flex items-center bg-[#09110e] p-1 rounded-xl border border-[#223a31] gap-1" title="Ganti Senjata (Tombol 1 / 2 / 3 atau Q)">
+        <button type="button" data-weapon="0" class="weapon-pill px-2 py-1 rounded-lg text-xs font-bold bg-[#d4e857] text-[#09110e] transition flex items-center gap-1">
+          <span>🔥</span><span class="hidden lg:inline">Api</span>
+        </button>
+        <button type="button" data-weapon="1" class="weapon-pill px-2 py-1 rounded-lg text-xs font-bold text-gray-300 hover:bg-[#162822] transition flex items-center gap-1">
+          <span>🔱</span><span class="hidden lg:inline">3-Roh</span>
+        </button>
+        <button type="button" data-weapon="2" class="weapon-pill px-2 py-1 rounded-lg text-xs font-bold text-gray-300 hover:bg-[#162822] transition flex items-center gap-1">
+          <span>⚡</span><span class="hidden lg:inline">Petir</span>
+        </button>
+      </div>
+
+      <button id="btn-open-map" type="button" class="arcade-btn px-2.5 py-1.5 rounded-xl bg-[#172a23] hover:bg-[#223d33] border border-[#2e4f43] text-xs font-bold text-[#d4e857] flex items-center gap-1" title="Pilih Stage / Peta Dunia">
+        <span>🗺️</span><span class="hidden sm:inline">Stage</span>
+      </button>
+
+      <button id="btn-open-codex" type="button" class="arcade-btn px-2.5 py-1.5 rounded-xl bg-[#172a23] hover:bg-[#223d33] border border-[#2e4f43] text-xs font-bold text-purple-300 flex items-center gap-1" title="Ensiklopedia Demit & Karakter">
+        <span>📖</span><span class="hidden sm:inline">Demit</span>
+      </button>
+
+      <button id="btn-audio-toggle" type="button" class="arcade-btn w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#172a23] hover:bg-[#223d33] border border-[#2e4f43] text-xs font-bold text-gray-200 flex items-center justify-center" title="Suara Efek & Musik">
+        <span id="audio-icon">🔊</span>
+      </button>
+
+      <button id="btn-pause-menu" type="button" class="arcade-btn px-2.5 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/50 text-xs font-bold text-amber-200 flex items-center gap-1" title="Pause / Menu Utama (ESC / P)">
+        <span>⏸️</span><span class="hidden sm:inline">Menu</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN FULL-SCREEN GAME CANVAS CONTAINER                                -->
+  <!-- ===================================================================== -->
+  <main id="canvas-viewport" class="relative flex-grow w-full bg-[#09110e] overflow-hidden">
+    <canvas id="game-canvas" class="w-full h-full" tabindex="0" aria-label="Arena Vincy. A D bergerak, W melompat, J atau Spasi menembak, Shift dash, E jurus, Escape jeda."></canvas>
+
+    <!-- BOSS HEALTH BAR OVERLAY (Appears at Top of Arena During Boss Fight) -->
+    <div id="boss-hud-overlay" class="hidden absolute top-3 left-1/2 -translate-x-1/2 w-11/12 max-w-lg bg-[#080f0c]/90 border-2 border-purple-500 rounded-2xl px-4 py-2 shadow-[0_0_30px_rgba(185,103,255,0.4)] z-10 pointer-events-none">
+      <div class="flex items-center justify-between text-xs sm:text-sm font-display font-bold mb-1">
+        <span id="boss-hud-name" class="text-purple-300 tracking-wider uppercase flex items-center gap-1.5">
+          <span>👹</span> <span>BOS 1: POCONG RAKSASA</span>
+        </span>
+        <span id="boss-hud-hp-text" class="text-[#d4e857] font-mono">350 / 350</span>
+      </div>
+      <div class="w-full h-3.5 bg-gray-950 rounded-full overflow-hidden border border-purple-400/40 p-0.5">
+        <div id="boss-hud-bar" class="h-full rounded-full bg-gradient-to-r from-rose-600 via-purple-500 to-[#d4e857] transition-all duration-100" style="width: 100%;"></div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- 1. TITLE SCREEN / MAIN GAME MENU OVERLAY                            -->
+    <!-- =================================================================== -->
+    <div id="modal-title-screen" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 sm:p-6 bg-[#070d0b]/80 backdrop-blur-sm">
+      <!-- Key Art Background Layer inside Title Screen -->
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <img src="assets/arcade/e22fde1ddbc87177.jpg" alt="Vincy Key Art" class="w-full h-full object-cover object-center opacity-35 scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#070d0b] via-[#070d0b]/65 to-[#070d0b]/80"></div>
+      </div>
+
+      <!-- Main Title Card Content -->
+      <div class="relative z-10 max-w-xl w-full flex flex-col items-center text-center">
+        <!-- VINCY game title -->
+        <img src="assets/arcade/f154f396b81e59da.png" alt="Vincy The Phantom Chaser Logo" class="w-60 sm:w-72 md:w-80 h-auto drop-shadow-[0_14px_28px_rgba(0,0,0,0.9)] float-anim mb-3" />
+
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/90 border border-purple-400/40 text-purple-200 text-xs font-bold uppercase tracking-widest mb-4 shadow-lg">
+          <span>✨ 2D Action Side-Scroller • Demit Hunter</span>
+        </div>
+
+        <!-- Character Preview Strip -->
+        <div class="flex items-end justify-center gap-4 sm:gap-6 mb-5 bg-[#0e1b16]/85 px-6 py-2.5 rounded-2xl border border-[#28463c] shadow-xl">
+          <img src="assets/arcade/dec363de302286f2.png" alt="Vincy Shooting" class="h-14 sm:h-16 w-auto object-contain" />
+          <span class="font-display font-bold text-lg text-[#d4e857]">VS</span>
+          <img src="assets/arcade/2f63a9598399078d.png" alt="Banaspati" class="h-11 sm:h-12 w-auto object-contain" />
+          <img src="assets/arcade/8ecd94e475777b97.png" alt="Pocong" class="h-14 sm:h-16 w-auto object-contain" />
+          <img src="assets/arcade/d5ff8204103d458b.png" alt="Genderuwo" class="h-14 sm:h-16 w-auto object-contain hidden sm:block" />
+          <img src="assets/arcade/46cb1cb47291d7d3.png" alt="Ratu Demit" class="h-14 sm:h-16 w-auto object-contain" />
+        </div>
+
+        <!-- Main Arcade Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
+          <button id="btn-title-play" type="button" class="arcade-btn sm:col-span-2 py-3.5 px-6 rounded-2xl bg-[#d4e857] hover:bg-[#e3f56b] text-[#09110e] font-display font-extrabold text-lg sm:text-xl shadow-[0_0_25px_rgba(212,232,87,0.4)] flex items-center justify-center gap-2.5">
+            <span>▶️</span> <span id="title-play-label">MULAI MAIN (START GAME)</span>
+          </button>
+
+          <button id="btn-title-map" type="button" class="arcade-btn py-3 px-4 rounded-xl bg-[#162922] hover:bg-[#203a30] text-[#d4e857] border-2 border-[#d4e857]/40 font-display font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
+            <span>🗺️</span> <span>PILIH STAGE (4 BABAK)</span>
+          </button>
+
+          <button id="btn-title-codex" type="button" class="arcade-btn py-3 px-4 rounded-xl bg-[#162922] hover:bg-[#203a30] text-purple-200 border-2 border-purple-400/40 font-display font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
+            <span>📖</span> <span>INFO DEMIT &amp; SENJATA</span>
+          </button>
+        </div>
+
+        <div class="menu-extras">
+          <button id="btn-restart" type="button">Mulai ulang</button>
+          <button id="btn-fullscreen" type="button">⛶ Layar penuh</button>
+        </div>
+        <!-- Quick Controls Legend -->
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] sm:text-xs text-gray-300 bg-[#09110e]/80 px-4 py-2 rounded-xl border border-[#1f362d]">
+          <span><strong class="text-[#d4e857]">A/D / ◀▶</strong>: Lari</span>
+          <span><strong class="text-[#d4e857]">W / ▲</strong>: Lompat Ganda</span>
+          <span><strong class="text-[#d4e857]">Shift / L</strong>: Dash</span>
+          <span><strong class="text-[#d4e857]">Spasi / J / Klik</strong>: Tembak</span>
+          <span><strong class="text-[#d4e857]">Q / 1-3</strong>: Senjata</span>
+          <span><strong class="text-[#d4e857]">E / K</strong>: Jurus Tasbih</span>
+        </div>
+        <p class="game-credit">Adaptasi konsep · Ilustrasi referensi <a href="https://www.behance.net/gallery/231265229/Raka-The-Phantom-Chaser-Game-Art" target="_blank" rel="noopener noreferrer">MVG Studio ↗</a></p>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- 2. STAGE VICTORY / GAME OVER MODAL OVERLAY                          -->
+    <!-- =================================================================== -->
+    <div id="modal-stage-result" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center p-4 bg-[#070d0b]/85 backdrop-blur-sm text-center">
+      <div class="bg-[#101f1a] border-4 border-[#d4e857] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl">
+        <div id="result-badge" class="inline-block px-3 py-1 rounded-full bg-purple-900/80 text-purple-200 text-xs font-bold uppercase tracking-widest mb-2">
+          STAGE RESULT
+        </div>
+        <h2 id="result-title" class="font-display text-3xl sm:text-4xl font-extrabold text-lime-glow">
+          STAGE CLEARED!
+        </h2>
+        <p id="result-desc" class="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed">
+          Vincy berhasil mengusir semua demit dan mengalahkan Boss penjaga!
+        </p>
+
+        <div class="my-5 bg-[#09110e] rounded-2xl p-4 border border-[#243e35] grid grid-cols-2 gap-3 text-xs sm:text-sm">
+          <div>
+            <div class="text-gray-400">Total Skor</div>
+            <div id="result-score" class="font-display font-bold text-xl text-[#d4e857]">0</div>
+          </div>
+          <div>
+            <div class="text-gray-400">Combo Tertinggi</div>
+            <div id="result-combo" class="font-display font-bold text-xl text-purple-300">x1</div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button id="btn-result-next" type="button" class="arcade-btn w-full py-3 px-5 rounded-xl bg-[#d4e857] hover:bg-[#e5f76e] text-[#09110e] font-display font-bold text-sm sm:text-base shadow-lg">
+            ⏭️ Lanjut Stage Berikutnya
+          </button>
+          <button id="btn-result-retry" type="button" class="arcade-btn w-full py-3 px-5 rounded-xl bg-[#1a2e28] hover:bg-[#264239] text-white border border-[#35594d] font-display font-bold text-sm">
+            🔄 Main Ulang
+          </button>
+        </div>
+        <button id="btn-result-title" type="button" class="mt-3 text-xs font-semibold text-gray-400 hover:text-[#d4e857] transition">
+          🏠 Kembali ke Title Screen
+        </button>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- 3. INTERACTIVE WORLD MAP STAGE SELECT MODAL                         -->
+    <!-- =================================================================== -->
+    <div id="modal-world-map" class="hidden absolute inset-0 z-30 flex items-center justify-center p-3 sm:p-6 bg-[#070d0b]/90 backdrop-blur-md">
+      <div class="bg-[#11201b] border-2 border-[#315448] rounded-3xl max-w-5xl w-full max-h-full overflow-y-auto p-4 sm:p-6 shadow-2xl">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#223b32]">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-widest text-purple-300">Peta Petualangan Vincy</span>
+            <h2 class="font-display text-2xl sm:text-3xl font-bold text-lime-glow">Pilih Stage (World Map)</h2>
+          </div>
+          <button id="btn-close-map" type="button" class="arcade-btn px-3.5 py-1.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-500/40 font-bold text-xs">
+            ✖ Tutup [ESC]
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+          <!-- Overworld Map with 4 Interactive Stage Pins -->
+          <div class="lg:col-span-7 relative rounded-2xl overflow-hidden border-4 border-[#c9b78e] shadow-xl bg-[#09110e]">
+            <img src="assets/arcade/e7f1a40e78828168.jpg" alt="Peta Dunia Vincy" class="w-full h-auto block" />
+
+            <!-- Stage 1 Pin -->
+            <button type="button" data-map-idx="0" class="map-pin-btn map-pin absolute top-[35%] left-[21%] w-10 h-10 rounded-full bg-[#d4e857] text-[#09110e] font-display font-extrabold text-sm border-2 border-[#09110e] flex items-center justify-center shadow-xl">
+              1
+            </button>
+            <!-- Stage 2 Pin -->
+            <button type="button" data-map-idx="1" class="map-pin-btn map-pin absolute top-[63%] left-[48%] w-10 h-10 rounded-full bg-purple-500 text-white font-display font-extrabold text-sm border-2 border-[#09110e] flex items-center justify-center shadow-xl">
+              2
+            </button>
+            <!-- Stage 3 Pin -->
+            <button type="button" data-map-idx="2" class="map-pin-btn map-pin absolute top-[32%] left-[53%] w-10 h-10 rounded-full bg-emerald-400 text-[#09110e] font-display font-extrabold text-sm border-2 border-[#09110e] flex items-center justify-center shadow-xl">
+              3
+            </button>
+            <!-- Stage 4 Pin -->
+            <button type="button" data-map-idx="3" class="map-pin-btn map-pin absolute top-[26%] left-[82%] w-10 h-10 rounded-full bg-amber-400 text-[#09110e] font-display font-extrabold text-sm border-2 border-[#09110e] flex items-center justify-center shadow-xl">
+              4
+            </button>
+          </div>
+
+          <!-- Selected Stage Briefing Panel -->
+          <div class="lg:col-span-5 bg-[#0a1410] rounded-2xl p-4 sm:p-5 border border-[#264239] flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span id="map-info-chapter" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#d4e857]/20 text-[#d4e857]">CHAPTER 1</span>
+                <span id="map-info-stars" class="text-xs font-bold text-purple-300">Tingkat Bahaya: ★★☆☆</span>
+              </div>
+              <img id="map-info-img" src="assets/arcade/f0ec4a75244377d1.jpg" alt="Stage Preview" class="w-full h-36 object-cover rounded-xl border border-[#2c4c41] mb-3" />
+              <h3 id="map-info-title" class="font-display text-2xl font-bold text-white">The Village (Desa Sunyi)</h3>
+              <p id="map-info-desc" class="text-xs sm:text-sm text-gray-300 mt-1.5 leading-relaxed">
+                Desa tempat tinggal Vincy yang diteror bola api Banaspati dan Tuyul saat bulan purnama ungu tiba.
+              </p>
+              <div class="mt-3 pt-3 border-t border-[#1c322b] text-xs space-y-1 text-gray-300">
+                <div>👹 <strong class="text-white">Demit:</strong> <span id="map-info-demits">Banaspati, Tuyul, Babi Ngepet</span></div>
+                <div>👑 <strong class="text-white">Boss Stage:</strong> <span id="map-info-boss" class="text-[#d4e857] font-bold">Bos 1: Pocong Raksasa</span></div>
+              </div>
+            </div>
+
+            <button id="btn-map-launch" type="button" class="arcade-btn mt-4 w-full py-3 rounded-xl bg-[#d4e857] hover:bg-[#e3f56b] text-[#09110e] font-display font-extrabold text-sm shadow-lg flex items-center justify-center gap-2">
+              <span>🎮</span> <span>TERJUN KE STAGE INI!</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- 4. IN-GAME PARCHMENT CODEX (BESTIARY & CONCEPT ART VIEWER)          -->
+    <!-- =================================================================== -->
+    <div id="modal-codex" class="hidden absolute inset-0 z-30 flex items-center justify-center p-3 sm:p-6 bg-[#070d0b]/90 backdrop-blur-md">
+      <div class="bg-[#11201b] border-2 border-[#315448] rounded-3xl max-w-5xl w-full max-h-full flex flex-col overflow-hidden shadow-2xl">
+        <!-- Modal Header -->
+        <div class="p-4 sm:px-6 border-b border-[#223b32] flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-widest text-purple-300">Jurnal Pemburu Demit Vincy</span>
+            <h2 class="font-display text-xl sm:text-2xl font-bold text-lime-glow">Ensiklopedia Karakter, Demit &amp; Concept Art</h2>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="btn-codex-toggle-art" type="button" class="px-3 py-1.5 rounded-xl bg-[#1b3129] hover:bg-[#27443a] text-[#d4e857] border border-[#d4e857]/40 text-xs font-bold transition">
+              ✏️ Lihat Sketsa + Concept Art
+            </button>
+            <button id="btn-close-codex" type="button" class="arcade-btn px-3.5 py-1.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-500/40 font-bold text-xs">
+              ✖ Tutup
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable Parchment Cards Grid -->
+        <div id="codex-grid" class="p-4 sm:p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- BOTTOM ARCADE GAMEPAD BAR (Touch & Mouse Clickable + Keyboard Hints)  -->
+  <!-- ===================================================================== -->
+  <footer class="h-16 sm:h-18 bg-[#0d1814] border-t-2 border-[#213830] px-2.5 sm:px-6 flex items-center justify-between gap-2 z-30 shrink-0">
+    <!-- Left D-Pad: Left, Down/Drop, Right -->
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <button id="pad-left" type="button" class="arcade-btn w-12 h-11 sm:w-14 sm:h-12 rounded-xl bg-[#182c25] active:bg-[#d4e857] active:text-[#09110e] border-2 border-[#2f5044] font-bold text-lg flex items-center justify-center shadow-md" aria-label="Gerak Kiri">
+        ◀
+      </button>
+      <button id="pad-down" type="button" class="arcade-btn w-10 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#182c25] active:bg-[#d4e857] active:text-[#09110e] border-2 border-[#2f5044] font-bold text-xs flex flex-col items-center justify-center shadow-md" title="Turun Platform (S / Panah Bawah)">
+        <span>▼</span>
+      </button>
+      <button id="pad-right" type="button" class="arcade-btn w-12 h-11 sm:w-14 sm:h-12 rounded-xl bg-[#182c25] active:bg-[#d4e857] active:text-[#09110e] border-2 border-[#2f5044] font-bold text-lg flex items-center justify-center shadow-md" aria-label="Gerak Kanan">
+        ▶
+      </button>
+    </div>
+
+    <button id="btn-mobile-weapon" type="button" class="arcade-btn" aria-label="Ganti senjata">⇄ Senjata</button>
+    <!-- Center: Live Status Banner / Weapon Indicator -->
+    <div class="hidden lg:flex flex-col items-center text-center">
+      <div id="footer-status-msg" class="text-xs font-bold text-[#d4e857] tracking-wide">
+        🔥 SENJATA AKTIF: MERIAM BANASPATI (Tembakan Cepat)
+      </div>
+      <div class="text-[11px] text-gray-400 mt-0.5">
+        Tip: Lompat ke pijakan kayu/batu untuk menghindari serudukan Babi Ngepet &amp; ambil Jamu ❤️!
+      </div>
+    </div>
+
+    <!-- Right Action Buttons: Jump, Dash, Switch Weapon, Shoot, Ultimate -->
+    <div class="flex items-center gap-1.5 sm:gap-2">
+      <button id="pad-jump" type="button" class="arcade-btn px-3 sm:px-4 h-11 sm:h-12 rounded-xl bg-[#182c25] active:bg-[#d4e857] active:text-[#09110e] border-2 border-[#2f5044] font-display font-bold text-xs sm:text-sm flex items-center gap-1 shadow-md">
+        <span>⬆️</span> <span>LOMPAT</span>
+      </button>
+
+      <button id="pad-dash" type="button" class="arcade-btn px-2.5 sm:px-3.5 h-11 sm:h-12 rounded-xl bg-[#182c25] active:bg-emerald-400 active:text-[#09110e] border-2 border-emerald-500/40 font-display font-bold text-xs sm:text-sm text-emerald-300 flex items-center gap-1 shadow-md" title="Dash Menghindar (Shift / L)">
+        <span>💨</span> <span class="hidden sm:inline">DASH</span>
+      </button>
+
+      <button id="pad-shoot" type="button" class="arcade-btn px-4 sm:px-5 h-11 sm:h-12 rounded-xl bg-[#d4e857] hover:bg-[#e3f56b] text-[#09110e] font-display font-extrabold text-xs sm:text-sm flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,232,87,0.3)]">
+        <span>🔫</span> <span>TEMBAK</span>
+      </button>
+
+      <button id="pad-special" type="button" class="arcade-btn px-3 sm:px-4 h-11 sm:h-12 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-display font-extrabold text-xs sm:text-sm flex items-center gap-1 shadow-[0_0_15px_rgba(168,85,247,0.4)]" title="Jurus Pamungkas Tasbih [E]">
+        <span>✨</span> <span class="hidden md:inline">TASBIH</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- GAME ENGINE & INTERACTIVE LOGIC                                       -->
+  <!-- ===================================================================== -->
+  <script src="js/arcade.js" defer></script>
+</body>
+</html>

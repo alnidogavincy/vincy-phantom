@@ -1,0 +1,1 @@
+{"name":"vincy-phantom-chaser","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"node server.mjs","start":"node server.mjs","test":"node --test tests/*.test.js","build:css":"tailwindcss -i arcade.source.css -o arcade.css --minify"},"engines":{"node":">=20"},"devDependencies":{"tailwindcss":"^3.4.17"}}
